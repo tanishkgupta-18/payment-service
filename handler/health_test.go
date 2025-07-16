@@ -8,7 +8,7 @@ import (
 )
 
 func TestHealth(t *testing.T) {
-	handler := func(_ *gofr.Context) (interface{}, error) {
+	handler := func(_ *gofr.Context) (any, error) {
 		return map[string]string{"status": "UP"}, nil
 	}
 
