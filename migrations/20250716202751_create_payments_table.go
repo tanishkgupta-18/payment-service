@@ -13,11 +13,11 @@ CREATE TABLE IF NOT EXISTS payments (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );`
 
-func create_payments_table() migration.Migrate {
+func CreatePaymentsTable() migration.Migrate {
 	return migration.Migrate{
 		UP: func(d migration.Datasource) error {
 			_, err := d.SQL.Exec(createPaymentsTableSQL)
-            return err
+			return err
 		},
 	}
 }
