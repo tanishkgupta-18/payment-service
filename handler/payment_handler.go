@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"strconv"
+
+	"gofr.dev/pkg/gofr"
+
 	"github.com/tanishkgupta-18/gofr-payment-service/service"
 	"github.com/tanishkgupta-18/gofr-payment-service/store"
-	"gofr.dev/pkg/gofr"
-	"strconv"
 )
 
 type PaymentHandler struct {
@@ -17,14 +19,17 @@ func NewPaymentHandler(s *service.PaymentService) *PaymentHandler {
 
 func (h *PaymentHandler) CreatePayment(ctx *gofr.Context) (interface{}, error) {
 	var p store.Payment
+
 	err := ctx.Bind(&p)
 	if err != nil {
 		return nil, err
 	}
+
 	id, err := h.service.CreatePayment(ctx, &p)
 	if err != nil {
 		return nil, err
 	}
+
 	return map[string]int{"paymentID": id}, nil
 }
 

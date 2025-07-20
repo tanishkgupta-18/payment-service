@@ -1,20 +1,19 @@
 package main
 
 import (
+	"gofr.dev/pkg/gofr"
+
 	"github.com/tanishkgupta-18/gofr-payment-service/handler"
 	"github.com/tanishkgupta-18/gofr-payment-service/migrations"
 	"github.com/tanishkgupta-18/gofr-payment-service/service"
 	"github.com/tanishkgupta-18/gofr-payment-service/store"
-	"gofr.dev/pkg/gofr"
 )
 
 func main() {
 	app := gofr.New()
 
-	// Register migrations
 	app.Migrate(migrations.All())
 
-	// Set up dependencies
 	paymentStore := store.NewPaymentStore()
 	paymentService := service.NewPaymentService(paymentStore)
 	paymentHandler := handler.NewPaymentHandler(paymentService)

@@ -1,8 +1,9 @@
 package service
 
 import (
-	"github.com/tanishkgupta-18/gofr-payment-service/store"
 	"gofr.dev/pkg/gofr"
+
+	"github.com/tanishkgupta-18/gofr-payment-service/store"
 )
 
 type PaymentService struct {

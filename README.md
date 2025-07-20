@@ -25,6 +25,16 @@ Planned features:
 
 ---
 
+## 📍 Routes
+
+| Method | Endpoint              | Description                       |
+|--------|-----------------------|-----------------------------------|
+| GET    | `/health`             | Health check endpoint             |
+| POST   | `/payments`           | Create a new payment              |
+| POST   | `/payments/callback`  | Update payment status via callback|
+
+---
+
 ## 🗂️ Project Structure
 
 ```bash
