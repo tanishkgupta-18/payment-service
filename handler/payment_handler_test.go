@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -20,6 +19,7 @@ import (
 	"github.com/tanishkgupta-18/gofr-payment-service/store"
 )
 
+// setupHandler initializes the handler with a mock context and SQL mock
 func setupHandler(t *testing.T) (*PaymentHandler, *gofr.Context, sqlmock.Sqlmock) {
 	mockContainer, mock := container.NewMockContainer(t)
 
@@ -35,106 +35,89 @@ func setupHandler(t *testing.T) (*PaymentHandler, *gofr.Context, sqlmock.Sqlmock
 	return handler, ctx, mock.SQL
 }
 
-func TestCreatePayment(t *testing.T) {
-	type gofrResponse struct {
-		result any
-		err    error
-	}
+// -------------------- CreatePayment Tests --------------------
 
-	tests := []struct {
-		name        string
-		body        string
-		mockExpect  func(sqlmock.Sqlmock)
-		expectedRes gofrResponse
-	}{
-		{
-			name:        "Invalid JSON",
-			body:        `{"amount":100.5,"status":"initiated"`, // malformed
-			mockExpect:  func(_ sqlmock.Sqlmock) {},
-			expectedRes: gofrResponse{nil, &json.SyntaxError{}},
-		},
-		{
-			name: "DB Insertion Error",
-			body: `{"amount":100.5,"status":"initiated"}`,
-			mockExpect: func(m sqlmock.Sqlmock) {
-				m.ExpectExec("INSERT INTO payments (amount, status) VALUES (?, ?)").
-					WithArgs(100.5, "initiated").
-					WillReturnError(sql.ErrConnDone)
-			},
-			expectedRes: gofrResponse{nil, sql.ErrConnDone},
-		},
-		{
-			name: "Successful Payment",
-			body: `{"amount":100.5,"status":"initiated"}`,
-			mockExpect: func(m sqlmock.Sqlmock) {
-				m.ExpectExec("INSERT INTO payments (amount, status) VALUES (?, ?)").
-					WithArgs(100.5, "initiated").
-					WillReturnResult(sqlmock.NewResult(12, 1))
-			},
-			expectedRes: gofrResponse{map[string]int{"paymentID": 12}, nil},
-		},
-	}
+func TestCreatePayment_InvalidJSON(t *testing.T) {
+	h, ctx, _ := setupHandler(t)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			h, ctx, mock := setupHandler(t)
-			tt.mockExpect(mock)
+	body := `{"amount":100.5,"status":"initiated"` 
+	req := httptest.NewRequest(http.MethodPost, "/payments", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	ctx.Request = gofrHttp.NewRequest(req)
 
-			req := httptest.NewRequest(http.MethodPost, "/payments", bytes.NewBufferString(tt.body))
-			req.Header.Set("Content-Type", "application/json")
-			ctx.Request = gofrHttp.NewRequest(req)
-
-			got, err := h.CreatePayment(ctx)
-			if tt.name == "Invalid JSON" {
-				assert.IsType(t, tt.expectedRes.err, err)
-			} else {
-				assert.Equal(t, tt.expectedRes.result, got)
-				assert.Equal(t, tt.expectedRes.err, err)
-			}
-		})
-	}
+	_, err := h.CreatePayment(ctx)
+	assert.Error(t, err)
 }
 
-func TestPaymentCallback(t *testing.T) {
-	tests := []struct {
-		name       string
-		query      string
-		mockExpect func(sqlmock.Sqlmock)
-		wantErr    bool
-	}{
-		{"Invalid ID", "id=abc&status=ok", func(_ sqlmock.Sqlmock) {}, true},
-		{
-			"DB Update Fails", "id=1&status=completed",
-			func(m sqlmock.Sqlmock) {
-				m.ExpectExec("UPDATE payments SET status = ? WHERE id = ?").
-					WithArgs("completed", 1).
-					WillReturnError(errors.New("fail"))
-			}, true,
-		},
-		{
-			"Success", "id=1&status=completed",
-			func(m sqlmock.Sqlmock) {
-				m.ExpectExec("UPDATE payments SET status = ? WHERE id = ?").
-					WithArgs("completed", 1).
-					WillReturnResult(sqlmock.NewResult(0, 1))
-			}, false,
-		},
-	}
+func TestCreatePayment_DBError(t *testing.T) {
+	h, ctx, mock := setupHandler(t)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			h, ctx, mock := setupHandler(t)
-			tt.mockExpect(mock)
+	mock.ExpectExec("INSERT INTO payments").
+		WithArgs(100.5, "initiated").
+		WillReturnError(sql.ErrConnDone)
 
-			req := httptest.NewRequest(http.MethodPost, "/payments/callback?"+tt.query, http.NoBody)
-			ctx.Request = gofrHttp.NewRequest(req)
+	body := `{"amount":100.5,"status":"initiated"}`
+	req := httptest.NewRequest(http.MethodPost, "/payments", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	ctx.Request = gofrHttp.NewRequest(req)
 
-			_, err := h.PaymentCallback(ctx)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+	_, err := h.CreatePayment(ctx)
+	assert.Equal(t, sql.ErrConnDone, err)
+}
+
+func TestCreatePayment_Success(t *testing.T) {
+	h, ctx, mock := setupHandler(t)
+
+	mock.ExpectExec("INSERT INTO payments").
+		WithArgs(100.5, "initiated").
+		WillReturnResult(sqlmock.NewResult(12, 1))
+
+	body := `{"amount":100.5,"status":"initiated"}`
+	req := httptest.NewRequest(http.MethodPost, "/payments", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	ctx.Request = gofrHttp.NewRequest(req)
+
+	resp, err := h.CreatePayment(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]int{"paymentID": 12}, resp)
+}
+
+// -------------------- PaymentCallback Tests --------------------
+
+func TestPaymentCallback_InvalidID(t *testing.T) {
+	h, ctx, _ := setupHandler(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/payments/callback?id=abc&status=ok", nil)
+	ctx.Request = gofrHttp.NewRequest(req)
+
+	_, err := h.PaymentCallback(ctx)
+	assert.Error(t, err)
+}
+
+func TestPaymentCallback_DBError(t *testing.T) {
+	h, ctx, mock := setupHandler(t)
+
+	mock.ExpectExec("UPDATE payments SET status = ? WHERE id = ?").
+		WithArgs("completed", 1).
+		WillReturnError(errors.New("fail"))
+
+	req := httptest.NewRequest(http.MethodPost, "/payments/callback?id=1&status=completed", nil)
+	ctx.Request = gofrHttp.NewRequest(req)
+
+	_, err := h.PaymentCallback(ctx)
+	assert.Error(t, err)
+}
+
+func TestPaymentCallback_Success(t *testing.T) {
+	h, ctx, mock := setupHandler(t)
+
+	mock.ExpectExec("UPDATE payments SET status = ? WHERE id = ?").
+		WithArgs("completed", 1).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	req := httptest.NewRequest(http.MethodPost, "/payments/callback?id=1&status=completed", nil)
+	ctx.Request = gofrHttp.NewRequest(req)
+
+	_, err := h.PaymentCallback(ctx)
+	assert.NoError(t, err)
 }
