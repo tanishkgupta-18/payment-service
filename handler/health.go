@@ -8,6 +8,6 @@ func New() *Health {
 	return &Health{}
 }
 
-func (h *Health) Health(_ *gofr.Context) (any, error) {
+func (*Health) Health(_ *gofr.Context) (any, error) {
 	return map[string]string{"status": "UP"}, nil
 }

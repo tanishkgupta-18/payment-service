@@ -22,7 +22,7 @@ func main() {
 	app.POST("/payments", paymentHandler.CreatePayment)
 	app.POST("/payments/callback", paymentHandler.PaymentCallback)
 
-	app.GET("/health", func(ctx *gofr.Context) (interface{}, error) {
+	app.GET("/health", func(_ *gofr.Context) (any, error) {
 		return map[string]string{"status": "ok"}, nil
 	})
 

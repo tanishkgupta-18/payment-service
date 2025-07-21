@@ -1,0 +1,122 @@
+{
+	"info": {
+		"_postman_id": "b986299a-67d5-4176-9fc1-e8dfdd5e6359",
+		"name": "Gofr Payment Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "45121484"
+	},
+	"item": [
+		{
+			"name": "Create Payment",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {\r",
+							"    pm.response.to.have.status(201); \r",
+							"});\r",
+							"\r",
+							"pm.test(\"Has paymentID in response\", function () {\r",
+							"    const json = pm.response.json();\r",
+							"    pm.expect(json.data).to.have.property(\"paymentID\");\r",
+							"});\r",
+							"pm.test(\"paymentID is a number\", function () {\r",
+							"    const id = pm.response.json().data.paymentID;\r",
+							"    pm.expect(id).to.be.a(\"number\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"amount\": 100.5,\r\n  \"status\": \"initiated\"\r\n}\r\n\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/payments",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"payments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Payment Callback",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Message confirms payment update\", function () {\r",
+							"    const json = pm.response.json();\r",
+							"    pm.expect(json.data).to.have.property(\"message\", \"Payment status updated\");\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"amount\": 100.5,\r\n  \"status\": \"initiated\"\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8000/payments/callback?id=1&status=completed",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"payments",
+						"callback"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "1"
+						},
+						{
+							"key": "status",
+							"value": "completed"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

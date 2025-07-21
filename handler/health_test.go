@@ -8,14 +8,11 @@ import (
 )
 
 func TestHealth(t *testing.T) {
-	handler := func(_ *gofr.Context) (any, error) {
-		return map[string]string{"status": "UP"}, nil
+	handler := func(_ *gofr.Context) any {
+		return map[string]string{"status": "UP"}
 	}
 
-	got, err := handler(nil)
-	if err != nil {
-		t.Fatalf("Handler returned an error: %v", err)
-	}
+	got := handler(nil)
 
 	want := map[string]string{"status": "UP"}
 

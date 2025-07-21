@@ -17,7 +17,7 @@ func NewPaymentHandler(s *service.PaymentService) *PaymentHandler {
 	return &PaymentHandler{service: s}
 }
 
-func (h *PaymentHandler) CreatePayment(ctx *gofr.Context) (interface{}, error) {
+func (h *PaymentHandler) CreatePayment(ctx *gofr.Context) (any, error) {
 	var p store.Payment
 
 	err := ctx.Bind(&p)
@@ -33,7 +33,7 @@ func (h *PaymentHandler) CreatePayment(ctx *gofr.Context) (interface{}, error) {
 	return map[string]int{"paymentID": id}, nil
 }
 
-func (h *PaymentHandler) PaymentCallback(ctx *gofr.Context) (interface{}, error) {
+func (h *PaymentHandler) PaymentCallback(ctx *gofr.Context) (any, error) {
 	idStr := ctx.Param("id")
 	status := ctx.Param("status")
 
