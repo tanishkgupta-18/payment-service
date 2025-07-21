@@ -3,37 +3,13 @@
   "info": {
     "title": "GoFr Payment Service",
     "version": "1.0.0",
-    "description": "This is the API documentation for the GoFr Payment Service."
+    "description": "API documentation for the GoFr Payment Service."
   },
   "paths": {
-    "/health": {
-      "get": {
-        "summary": "Health Check",
-        "description": "Returns the status of the application.",
-        "responses": {
-          "200": {
-            "description": "Successful health check",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "example": "UP"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/payments": {
       "post": {
         "summary": "Create Payment",
-        "description": "Creates a new payment with the specified amount and status.",
+        "description": "Create a new payment.",
         "requestBody": {
           "required": true,
           "content": {
@@ -44,11 +20,11 @@
                   "amount": {
                     "type": "number",
                     "format": "float",
-                    "example": 100.0
+                    "example": 100.5
                   },
                   "status": {
                     "type": "string",
-                    "example": "PENDING"
+                    "example": "initiated"
                   }
                 },
                 "required": ["amount", "status"]
@@ -57,16 +33,21 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Payment created successfully",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "paymentID": {
-                      "type": "integer",
-                      "example": 1
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "paymentID": {
+                          "type": "integer",
+                          "example": 1
+                        }
+                      }
                     }
                   }
                 }
@@ -79,39 +60,67 @@
     "/payments/callback": {
       "post": {
         "summary": "Payment Callback",
-        "description": "Updates the status of an existing payment based on payment ID.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "payment_id": {
-                    "type": "integer",
-                    "example": 1
-                  },
-                  "status": {
-                    "type": "string",
-                    "example": "SUCCESS"
-                  }
-                },
-                "required": ["payment_id", "status"]
-              }
-            }
+        "description": "Update the payment status using query parameters.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "completed"
           }
-        },
+        ],
         "responses": {
-          "200": {
+          "201": {
             "description": "Payment status updated",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "message": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Payment status updated"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Check if the payment service is running.",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
                       "type": "string",
-                      "example": "Payment status updated"
+                      "example": "UP"
                     }
                   }
                 }
