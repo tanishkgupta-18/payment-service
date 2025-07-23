@@ -126,12 +126,11 @@
 					"script": {
 						"exec": [
 							"pm.test(\"Status code is 200\", function () {\r",
-							"    pm.response.to.have.status(200);\r",
+							"  pm.response.to.have.status(200);\r",
 							"});\r",
-							"\r",
-							"pm.test(\"Response contains status 'ok'\", function () {\r",
-							"    const json = pm.response.json();\r",
-							"    pm.expect(json.data).to.have.property(\"status\", \"ok\");\r",
+							"pm.test(\"Service status is UP\", function () {\r",
+							"  const json = pm.response.json();\r",
+							"  pm.expect(json.data.status).to.eql(\"UP\");\r",
 							"});\r",
 							""
 						],
@@ -147,13 +146,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8000/health",
+					"raw": "http://localhost:8000/.well-known/health",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8000",
 					"path": [
+						".well-known",
 						"health"
 					]
 				}
