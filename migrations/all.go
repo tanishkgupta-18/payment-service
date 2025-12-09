@@ -6,8 +6,7 @@ import (
 )
 
 func All() map[int64]migration.Migrate {
-	return map[int64]migration.Migrate {
-	
-		20250715135013: createHealthCheckTable(),
+	return map[int64]migration.Migrate{
+		20250716202751: CreatePaymentsTable(),
 	}
 }

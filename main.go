@@ -1,9 +1,12 @@
 package main
 
 import (
+	"gofr.dev/pkg/gofr"
+
 	"github.com/tanishkgupta-18/gofr-payment-service/handler"
 	"github.com/tanishkgupta-18/gofr-payment-service/migrations"
-	"gofr.dev/pkg/gofr"
+	"github.com/tanishkgupta-18/gofr-payment-service/service"
+	"github.com/tanishkgupta-18/gofr-payment-service/store"
 )
 
 func main() {
@@ -11,8 +14,13 @@ func main() {
 
 	app.Migrate(migrations.All())
 
-	h := handler.New()
-	app.GET("/health", h.Health)
+	paymentStore := store.NewPaymentStore()
+	paymentService := service.NewPaymentService(paymentStore)
+	paymentHandler := handler.NewPaymentHandler(paymentService)
+
+	// Routes
+	app.POST("/payments", paymentHandler.CreatePayment)
+	app.POST("/payments/callback", paymentHandler.PaymentCallback)
 
 	app.Run()
 }
